@@ -1,0 +1,6 @@
+automation_log.txt
+alerts.log
+history.db
+__pycache__/
+*.pyc
+static/screenshots/*.png

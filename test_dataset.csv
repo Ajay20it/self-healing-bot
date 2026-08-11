@@ -1,0 +1,5 @@
+test_name,primary_by,primary_value,fallback_by,fallback_value,description
+Submit Button,id,btn-5555,css,button[id^='btn-'],Primary submit action
+Save Button,id,save-5566,css,button[id^='save-'],Saves form data
+Cancel Button,id,cancel-7788,css,button[id^='cancel-'],Cancels form
+Username Field,id,username-9911,css,input[id^='username-'],Text input field

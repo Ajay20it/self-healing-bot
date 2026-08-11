@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Self-Healing Bot Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 950px; margin: 40px auto; }
+        button { padding: 10px 20px; font-size: 15px; cursor: pointer; margin-right: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
+        .PASS { color: green; font-weight: bold; }
+        .SELF-HEALED { color: orange; font-weight: bold; }
+        .FAIL { color: red; font-weight: bold; }
+        .reason, .suggestion { font-size: 13px; color: #444; }
+        .suggestion { font-style: italic; }
+        .autofix { background: #e8f5e9; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; display: inline-block; margin-top: 6px; }
+        .applybtn { background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-top: 6px; cursor: pointer; }
+        .toolbar { margin-bottom: 20px; }
+        h2 { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Self-Healing Bot Dashboard</h1>
+    <p>Click below to run all UI selector tests. Auto-run also happens every 30 minutes in the background.</p>
+
+    <div class="toolbar">
+        <button onclick="runTests()">Run Tests</button>
+        <button onclick="loadHistory()">View History</button>
+        <a href="/export"><button>Export Report (CSV)</button></a>
+    </div>
+
+    <div id="result"></div>
+
+    <h2>Test History</h2>
+    <div id="history"></div>
+
+    <script>
+        function runTests() {
+            document.getElementById("result").innerHTML = "Running tests...";
+            fetch("/run-tests")
+                .then(res => res.json())
+                .then(data => {
+                    let html = "<table><tr><th>Test</th><th>Status</th><th>What happened</th><th>What to do</th></tr>";
+                    data.forEach(r => {
+                        html += "<tr>";
+                        html += "<td>" + r.test + "</td>";
+                        html += "<td class=\"" + r.status + "\">" + r.status + "</td>";
+                        html += "<td class=\"reason\">" + r.reason + "</td>";
+                        html += "<td class=\"suggestion\">" + r.suggestion;
+                        if (r.auto_fix) {
+                            html += "<div class=\"autofix\">Suggested id: " + r.auto_fix + "</div>";
+                            html += "<br><button class=\"applybtn\" onclick=\"applyFix('" + r.test + "', '" + r.auto_fix + "')\">Apply Fix</button>";
+                        }
+                        if (r.screenshot) {
+                            html += "<br><img src=\"/static/" + r.screenshot + "\" width=\"200\">";
+                        }
+                        html += "</td>";
+                        html += "</tr>";
+                    });
+                    html += "</table>";
+                    document.getElementById("result").innerHTML = html;
+                });
+        }
+
+        function applyFix(testName, newValue) {
+            fetch("/apply-fix", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ test_name: testName, new_value: newValue })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Updated " + data.test + " -> primary selector now '" + data.new_value + "'. Re-run tests to confirm.");
+            });
+        }
+
+        function loadHistory() {
+            document.getElementById("history").innerHTML = "Loading history...";
+            fetch("/history")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        document.getElementById("history").innerHTML = "No history yet - run tests first.";
+                        return;
+                    }
+                    let html = "<table><tr><th>Test</th><th>Total Runs</th><th>Pass</th><th>Self-Healed</th><th>Fail</th><th>Last Run</th></tr>";
+                    data.forEach(h => {
+                        html += "<tr><td>" + h.test + "</td><td>" + h.total + "</td><td style='color:green'>" + h.passes +
+                                "</td><td style='color:orange'>" + h.healed + "</td><td style='color:red'>" + h.fails +
+                                "</td><td>" + h.last_run + "</td></tr>";
+                    });
+                    html += "</table>";
+                    document.getElementById("history").innerHTML = html;
+                });
+        }
+
+        window.onload = loadHistory;
+    </script>
+</body>
+</html>
