@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 import csv
 import logging
+import os
 import time
 
 logging.basicConfig(filename='automation_log.txt', level=logging.INFO,
@@ -28,11 +29,21 @@ def run_test(driver, test_name, primary_by, primary_value, fallback_by, fallback
             return "SELF-HEALED"
         except NoSuchElementException:
             logging.error(f"[{test_name}] FAIL - Both primary and fallback selectors failed")
+            logging.error(f"[{test_name}] Self-healing process failed")
+            screenshot_path = "failure_screenshot.png"
+            try:
+                driver.save_screenshot(screenshot_path)
+                logging.info(f"[{test_name}] Failure screenshot captured: {screenshot_path}")
+            except Exception as e:
+                logging.error(f"[{test_name}] Failed to capture screenshot: {e}")
             return "FAIL"
 
 def main():
     driver = webdriver.Chrome()
-    driver.get("file:///C:/Users/Ajaykumar/OneDrive/Desktop/SelfHealingBot/test.html")
+    test_path = "file:///C:/Users/Ajaykumar/OneDrive/Desktop/SelfHealingBot/test.html"
+    if not os.path.exists("C:/Users/Ajaykumar/OneDrive/Desktop/SelfHealingBot/test.html"):
+        test_path = "file:///" + os.path.abspath("test.html").replace("\\", "/")
+    driver.get(test_path)
     time.sleep(2)
 
     results = []
